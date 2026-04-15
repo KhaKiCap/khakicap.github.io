@@ -14,4 +14,4 @@ AdMob의 개인정보처리방침: https://policies.google.com/privacy
 Google Play 결제 시스템을 사용하며, 결제 정보는 Google이 처리합니다.
 
 ## 문의
-이메일: (본인 이메일 입력)
+이메일: sogns92@gmail.com
