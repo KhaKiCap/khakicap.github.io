@@ -5,7 +5,7 @@ struct FeedbackEditorView: View {
     let sessionId: UUID
     let currentTimestamp: Double
 
-    @Environment(DataStore.self) private var store
+    @EnvironmentObject private var store: DataStore
     @Environment(\.dismiss) private var dismiss
 
     @State private var text = ""
@@ -18,13 +18,12 @@ struct FeedbackEditorView: View {
             Form {
                 Section("시점") {
                     HStack {
-                        Image(systemName: "clock").foregroundStyle(.secondary)
+                        Image(systemName: "clock").foregroundColor(.secondary)
                         Text(formatTimestamp(currentTimestamp))
                             .font(.system(.body, design: .monospaced).bold())
-                            .foregroundStyle(Color.accentColor)
+                            .foregroundColor(Color.accentColor)
                         Spacer()
-                        Text("현재 재생 시점")
-                            .font(.caption).foregroundStyle(.secondary)
+                        Text("현재 재생 시점").font(.caption).foregroundColor(.secondary)
                     }
                 }
 
@@ -95,7 +94,7 @@ struct CategoryChip: View {
             .padding(.horizontal, 12).padding(.vertical, 8)
             .frame(maxWidth: .infinity)
             .background(isSelected ? chipColor.opacity(0.2) : Color(.systemGray6))
-            .foregroundStyle(isSelected ? chipColor : .secondary)
+            .foregroundColor(isSelected ? chipColor : .secondary)
             .clipShape(RoundedRectangle(cornerRadius: 10))
             .overlay(
                 RoundedRectangle(cornerRadius: 10)

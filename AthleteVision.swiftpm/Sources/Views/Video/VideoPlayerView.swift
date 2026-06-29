@@ -5,7 +5,7 @@ import AVFoundation
 struct VideoPlayerView: View {
     let athleteId: UUID
     let sessionId: UUID
-    @Environment(DataStore.self) private var store
+    @EnvironmentObject private var store: DataStore
 
     @State private var player: AVPlayer?
     @State private var currentTime: Double = 0
@@ -21,24 +21,21 @@ struct VideoPlayerView: View {
                     Section {
                         videoSection(session)
                     }
-
                     Section("세션 정보") {
                         Label(
                             session.recordedAt.formatted(date: .complete, time: .shortened),
                             systemImage: "calendar"
                         )
-                        .font(.subheadline).foregroundStyle(.secondary)
-
+                        .font(.subheadline).foregroundColor(.secondary)
                         Label("길이: \(session.formattedDuration)", systemImage: "clock")
-                            .font(.subheadline).foregroundStyle(.secondary)
+                            .font(.subheadline).foregroundColor(.secondary)
                     }
-
                     Section("피드백 (\(session.feedbackItems.count))") {
                         if session.feedbackItems.isEmpty {
-                            ContentUnavailableView(
-                                "피드백 없음",
+                            EmptyStateView(
+                                title: "피드백 없음",
                                 systemImage: "bubble.left.and.bubble.right",
-                                description: Text("+ 버튼으로 현재 시점에 피드백을 추가하세요")
+                                description: "+ 버튼으로 현재 시점에 피드백을 추가하세요"
                             )
                             .listRowBackground(Color.clear)
                         } else {
@@ -76,7 +73,7 @@ struct VideoPlayerView: View {
                     )
                 }
             } else {
-                ContentUnavailableView("세션을 찾을 수 없습니다", systemImage: "video.slash")
+                EmptyStateView(title: "세션을 찾을 수 없습니다", systemImage: "video.slash", description: "")
             }
         }
         .onAppear { setupPlayer() }
@@ -85,7 +82,7 @@ struct VideoPlayerView: View {
 
     @ViewBuilder
     private func videoSection(_ session: VideoSession) -> some View {
-        if let url = session.videoURL(), let player {
+        if session.videoURL() != nil, let player {
             VideoPlayer(player: player)
                 .frame(height: 240)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
@@ -96,8 +93,10 @@ struct VideoPlayerView: View {
                 .frame(height: 240)
                 .overlay {
                     VStack(spacing: 8) {
-                        Image(systemName: "video.slash").font(.largeTitle).foregroundStyle(.secondary)
-                        Text("영상 파일을 찾을 수 없습니다").font(.caption).foregroundStyle(.secondary)
+                        Image(systemName: "video.slash")
+                            .font(.largeTitle).foregroundColor(.secondary)
+                        Text("영상 파일을 찾을 수 없습니다")
+                            .font(.caption).foregroundColor(.secondary)
                     }
                 }
                 .listRowInsets(EdgeInsets())
@@ -140,20 +139,18 @@ struct FeedbackRowView: View {
                 VStack(spacing: 4) {
                     Text(item.formattedTimestamp)
                         .font(.system(.caption, design: .monospaced).bold())
-                        .foregroundStyle(Color.accentColor)
+                        .foregroundColor(Color.accentColor)
                         .padding(.horizontal, 8).padding(.vertical, 4)
                         .background(Color.accentColor.opacity(0.12))
                         .clipShape(RoundedRectangle(cornerRadius: 6))
-
                     Image(systemName: item.category.systemImage)
-                        .font(.caption)
-                        .foregroundStyle(categoryColor)
+                        .font(.caption).foregroundColor(categoryColor)
                 }
                 VStack(alignment: .leading, spacing: 4) {
                     Text(item.category.rawValue)
-                        .font(.caption.bold()).foregroundStyle(categoryColor)
+                        .font(.caption.bold()).foregroundColor(categoryColor)
                     Text(item.text)
-                        .font(.subheadline).foregroundStyle(.primary)
+                        .font(.subheadline).foregroundColor(.primary)
                         .multilineTextAlignment(.leading)
                 }
             }

@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct AddAthleteView: View {
-    @Environment(DataStore.self) private var store
+    @EnvironmentObject private var store: DataStore
     @Environment(\.dismiss) private var dismiss
 
     @State private var name = ""

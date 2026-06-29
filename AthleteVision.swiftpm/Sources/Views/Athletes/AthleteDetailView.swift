@@ -2,7 +2,7 @@ import SwiftUI
 
 struct AthleteDetailView: View {
     let athleteId: UUID
-    @Environment(DataStore.self) private var store
+    @EnvironmentObject private var store: DataStore
     @State private var showingVideoImport = false
     @State private var showingEdit = false
 
@@ -18,16 +18,16 @@ struct AthleteDetailView: View {
 
                     if !athlete.profileNote.isEmpty {
                         Section("메모") {
-                            Text(athlete.profileNote).foregroundStyle(.secondary)
+                            Text(athlete.profileNote).foregroundColor(.secondary)
                         }
                     }
 
                     Section("촬영 영상 (\(athlete.sessions.count))") {
                         if athlete.sessions.isEmpty {
-                            ContentUnavailableView(
-                                "영상 없음",
+                            EmptyStateView(
+                                title: "영상 없음",
                                 systemImage: "video.slash",
-                                description: Text("우측 상단 버튼으로 영상을 추가하세요")
+                                description: "우측 상단 버튼으로 영상을 추가하세요"
                             )
                             .listRowBackground(Color.clear)
                         } else {
@@ -67,7 +67,7 @@ struct AthleteDetailView: View {
                     EditAthleteView(athlete: athlete)
                 }
             } else {
-                ContentUnavailableView("선수를 찾을 수 없습니다", systemImage: "person.slash")
+                EmptyStateView(title: "선수를 찾을 수 없습니다", systemImage: "person.slash", description: "")
             }
         }
     }
@@ -80,20 +80,20 @@ struct AthleteDetailView: View {
                     .frame(width: 72, height: 72)
                 Text(athlete.initials)
                     .font(.largeTitle.bold())
-                    .foregroundStyle(Color.accentColor)
+                    .foregroundColor(Color.accentColor)
             }
             VStack(alignment: .leading, spacing: 6) {
                 Text(athlete.name).font(.title2.bold())
                 HStack {
                     Label(athlete.sport, systemImage: "figure.run")
-                        .font(.subheadline).foregroundStyle(.secondary)
+                        .font(.subheadline).foregroundColor(.secondary)
                     if !athlete.position.isEmpty {
                         Text("· \(athlete.position)")
-                            .font(.subheadline).foregroundStyle(.secondary)
+                            .font(.subheadline).foregroundColor(.secondary)
                     }
                 }
                 Text("등록: \(athlete.createdAt.formatted(date: .abbreviated, time: .omitted))")
-                    .font(.caption).foregroundStyle(.tertiary)
+                    .font(.caption).foregroundColor(.secondary)
             }
         }
         .padding(.vertical, 8)
@@ -102,7 +102,7 @@ struct AthleteDetailView: View {
 
 struct EditAthleteView: View {
     let athlete: Athlete
-    @Environment(DataStore.self) private var store
+    @EnvironmentObject private var store: DataStore
     @Environment(\.dismiss) private var dismiss
 
     @State private var name: String
@@ -163,20 +163,20 @@ struct SessionRowView: View {
                     .fill(Color(.systemGray5))
                     .frame(width: 60, height: 44)
                 Image(systemName: "play.rectangle.fill")
-                    .font(.title2).foregroundStyle(Color.accentColor)
+                    .font(.title2).foregroundColor(Color.accentColor)
             }
             VStack(alignment: .leading, spacing: 4) {
                 Text(session.title).font(.subheadline.bold()).lineLimit(1)
                 HStack(spacing: 8) {
                     Label(session.formattedDuration, systemImage: "clock")
-                        .font(.caption).foregroundStyle(.secondary)
+                        .font(.caption).foregroundColor(.secondary)
                     Label("\(session.feedbackItems.count)개 피드백", systemImage: "bubble.left")
-                        .font(.caption).foregroundStyle(.secondary)
+                        .font(.caption).foregroundColor(.secondary)
                 }
             }
             Spacer()
             Text(session.recordedAt.formatted(date: .abbreviated, time: .omitted))
-                .font(.caption2).foregroundStyle(.tertiary)
+                .font(.caption2).foregroundColor(.secondary)
         }
         .padding(.vertical, 2)
     }

@@ -9,7 +9,7 @@ import UIKit
 struct VideoImportView: View {
     let athleteId: UUID
     let athleteName: String
-    @Environment(DataStore.self) private var store
+    @EnvironmentObject private var store: DataStore
     @Environment(\.dismiss) private var dismiss
 
     @State private var showingCamera = false
@@ -37,14 +37,10 @@ struct VideoImportView: View {
                     VStack(spacing: 16) {
                         Image(systemName: "video.badge.plus")
                             .font(.system(size: 64))
-                            .foregroundStyle(Color.accentColor)
-
-                        Text("영상 추가")
-                            .font(.title2.bold())
-
+                            .foregroundColor(Color.accentColor)
+                        Text("영상 추가").font(.title2.bold())
                         Text("카메라로 직접 촬영하거나\n사진 앱에서 기존 영상을 가져오세요")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .font(.subheadline).foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
                     }
                     .padding(.bottom, 48)
@@ -57,7 +53,7 @@ struct VideoImportView: View {
                                     .frame(maxWidth: .infinity)
                                     .padding()
                                     .background(Color.accentColor)
-                                    .foregroundStyle(.white)
+                                    .foregroundColor(.white)
                                     .clipShape(RoundedRectangle(cornerRadius: 14))
                             }
                         }
@@ -68,7 +64,7 @@ struct VideoImportView: View {
                                 .frame(maxWidth: .infinity)
                                 .padding()
                                 .background(Color(.systemGray5))
-                                .foregroundStyle(.primary)
+                                .foregroundColor(.primary)
                                 .clipShape(RoundedRectangle(cornerRadius: 14))
                         }
                     }
@@ -77,10 +73,7 @@ struct VideoImportView: View {
                     Spacer()
 
                     if let error = errorMessage {
-                        Text(error)
-                            .foregroundStyle(.red)
-                            .font(.caption)
-                            .padding()
+                        Text(error).foregroundColor(.red).font(.caption).padding()
                     }
                 }
             }
@@ -93,17 +86,14 @@ struct VideoImportView: View {
             }
         }
         .fullScreenCover(isPresented: $showingCamera) {
-            CameraPickerView { url, duration in
+            CameraPickerView(onCancel: { showingCamera = false }) { url, duration in
                 pendingURL = url
                 pendingDuration = duration
                 sessionTitle = "\(athleteName) - \(Date().formatted(date: .abbreviated, time: .shortened))"
                 showingCamera = false
-                // Delay alert until cover finishes dismissing
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     showingSaveAlert = true
                 }
-            } onCancel: {
-                showingCamera = false
             }
             .ignoresSafeArea()
         }
@@ -114,7 +104,7 @@ struct VideoImportView: View {
         } message: {
             Text("이 영상을 저장하시겠습니까?")
         }
-        .onChange(of: pickerItem) { _, item in
+        .onChange(of: pickerItem) { item in
             guard let item else { return }
             Task { await importFromPhotos(item: item) }
         }
@@ -135,34 +125,31 @@ struct VideoImportView: View {
     private func importFromPhotos(item: PhotosPickerItem) async {
         isProcessing = true
         errorMessage = nil
-
         do {
             guard let movie = try await item.loadTransferable(type: VideoFile.self) else {
                 errorMessage = "영상을 불러올 수 없습니다."
                 isProcessing = false
                 return
             }
-
             let filename = "video_\(UUID().uuidString).mov"
             let destURL = store.videosDirectoryURL.appendingPathComponent(filename)
             try FileManager.default.copyItem(at: movie.url, to: destURL)
-
             let asset = AVURLAsset(url: destURL)
             let duration = (try? await asset.load(.duration))?.seconds ?? 0
-
             let title = "\(athleteName) - \(Date().formatted(date: .abbreviated, time: .shortened))"
             let session = VideoSession(title: title, videoFilename: filename, duration: duration)
-            store.addSession(session, athleteId: athleteId)
-            dismiss()
+            await MainActor.run {
+                store.addSession(session, athleteId: athleteId)
+                dismiss()
+            }
         } catch {
             errorMessage = "가져오기 실패: \(error.localizedDescription)"
         }
-
         isProcessing = false
     }
 }
 
-// MARK: - VideoFile (PhotosPicker Transferable)
+// MARK: - VideoFile Transferable
 
 struct VideoFile: Transferable {
     let url: URL
@@ -179,11 +166,11 @@ struct VideoFile: Transferable {
     }
 }
 
-// MARK: - CameraPickerView (UIImagePickerController)
+// MARK: - CameraPickerView
 
 struct CameraPickerView: UIViewControllerRepresentable {
-    let onVideoRecorded: (URL, Double) -> Void
     let onCancel: () -> Void
+    let onVideoRecorded: (URL, Double) -> Void
 
     func makeUIViewController(context: Context) -> UIImagePickerController {
         let picker = UIImagePickerController()
@@ -195,12 +182,10 @@ struct CameraPickerView: UIViewControllerRepresentable {
     }
 
     func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
-
     func makeCoordinator() -> Coordinator { Coordinator(parent: self) }
 
     final class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
         let parent: CameraPickerView
-
         init(parent: CameraPickerView) { self.parent = parent }
 
         func imagePickerController(
@@ -211,20 +196,17 @@ struct CameraPickerView: UIViewControllerRepresentable {
                 parent.onCancel()
                 return
             }
-
-            let docsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-            let videosURL = docsURL.appendingPathComponent("videos")
+            let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            let videosURL = docs.appendingPathComponent("videos")
             try? FileManager.default.createDirectory(at: videosURL, withIntermediateDirectories: true)
-
             let filename = "video_\(UUID().uuidString).mov"
             let destURL = videosURL.appendingPathComponent(filename)
-
             do {
                 try FileManager.default.copyItem(at: tempURL, to: destURL)
-                Task { @MainActor in
+                Task {
                     let asset = AVURLAsset(url: destURL)
                     let duration = (try? await asset.load(.duration))?.seconds ?? 0
-                    self.parent.onVideoRecorded(destURL, duration)
+                    await MainActor.run { self.parent.onVideoRecorded(destURL, duration) }
                 }
             } catch {
                 parent.onVideoRecorded(tempURL, 0)

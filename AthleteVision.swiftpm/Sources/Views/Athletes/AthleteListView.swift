@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct AthleteListView: View {
-    @Environment(DataStore.self) private var store
+    @EnvironmentObject private var store: DataStore
     @State private var searchText = ""
     @State private var showingAdd = false
 
@@ -17,10 +17,10 @@ struct AthleteListView: View {
         NavigationStack {
             Group {
                 if store.athletes.isEmpty {
-                    ContentUnavailableView(
-                        "선수 없음",
+                    EmptyStateView(
+                        title: "선수 없음",
                         systemImage: "person.2.slash",
-                        description: Text("+ 버튼으로 선수를 추가하세요")
+                        description: "+ 버튼으로 선수를 추가하세요"
                     )
                 } else {
                     List {
@@ -62,15 +62,15 @@ struct AthleteRowView: View {
                     .frame(width: 52, height: 52)
                 Text(athlete.initials)
                     .font(.title3.bold())
-                    .foregroundStyle(Color.accentColor)
+                    .foregroundColor(Color.accentColor)
             }
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(athlete.name).font(.headline)
                 HStack(spacing: 4) {
-                    Text(athlete.sport).font(.subheadline).foregroundStyle(.secondary)
+                    Text(athlete.sport).font(.subheadline).foregroundColor(.secondary)
                     if !athlete.position.isEmpty {
-                        Text("· \(athlete.position)").font(.subheadline).foregroundStyle(.secondary)
+                        Text("· \(athlete.position)").font(.subheadline).foregroundColor(.secondary)
                     }
                 }
             }
@@ -79,8 +79,8 @@ struct AthleteRowView: View {
 
             VStack(alignment: .trailing, spacing: 2) {
                 Text("\(athlete.sessions.count)")
-                    .font(.title3.bold()).foregroundStyle(Color.accentColor)
-                Text("영상").font(.caption2).foregroundStyle(.tertiary)
+                    .font(.title3.bold()).foregroundColor(Color.accentColor)
+                Text("영상").font(.caption2).foregroundColor(.secondary)
             }
         }
         .padding(.vertical, 4)

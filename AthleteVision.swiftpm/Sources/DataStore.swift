@@ -1,9 +1,8 @@
 import Foundation
-import Observation
+import Combine
 
-@Observable
-final class DataStore {
-    var athletes: [Athlete] = []
+final class DataStore: ObservableObject {
+    @Published var athletes: [Athlete] = []
 
     private var dataFileURL: URL {
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
