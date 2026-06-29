@@ -9,14 +9,12 @@ struct AddAthleteView: View {
     @State private var position = ""
     @State private var note = ""
 
-    var isValid: Bool { !name.isEmpty && !sport.isEmpty }
-
     var body: some View {
         NavigationStack {
             Form {
                 Section("기본 정보") {
                     TextField("이름 *", text: $name)
-                    TextField("종목 * (예: 축구, 농구, 야구)", text: $sport)
+                    TextField("종목 * (예: 축구, 농구)", text: $sport)
                     TextField("포지션 (예: 공격수)", text: $position)
                 }
                 Section("메모") {
@@ -27,15 +25,13 @@ struct AddAthleteView: View {
             .navigationTitle("선수 추가")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("취소") { dismiss() }
-                }
+                ToolbarItem(placement: .cancellationAction) { Button("취소") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("추가") {
                         store.addAthlete(name: name, sport: sport, position: position, note: note)
                         dismiss()
                     }
-                    .disabled(!isValid)
+                    .disabled(name.isEmpty || sport.isEmpty)
                 }
             }
         }

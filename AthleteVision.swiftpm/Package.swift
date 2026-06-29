@@ -1,4 +1,4 @@
-// swift-tools-version: 5.8
+// swift-tools-version: 5.9
 import PackageDescription
 
 let package = Package(
@@ -7,7 +7,7 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "AppModule",
-            path: "Sources"
+            path: "."
         )
     ]
 )

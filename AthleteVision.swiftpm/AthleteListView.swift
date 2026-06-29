@@ -6,7 +6,7 @@ struct AthleteListView: View {
     @State private var showingAdd = false
 
     var filtered: [Athlete] {
-        guard !searchText.isEmpty else { return store.athletes }
+        if searchText.isEmpty { return store.athletes }
         return store.athletes.filter {
             $0.name.localizedCaseInsensitiveContains(searchText) ||
             $0.sport.localizedCaseInsensitiveContains(searchText)
@@ -17,20 +17,20 @@ struct AthleteListView: View {
         NavigationStack {
             Group {
                 if store.athletes.isEmpty {
-                    EmptyStateView(
+                    PlaceholderView(
+                        icon: "person.2.slash",
                         title: "선수 없음",
-                        systemImage: "person.2.slash",
-                        description: "+ 버튼으로 선수를 추가하세요"
+                        subtitle: "우측 상단 + 버튼으로 선수를 추가하세요"
                     )
                 } else {
                     List {
                         ForEach(filtered) { athlete in
                             NavigationLink(destination: AthleteDetailView(athleteId: athlete.id)) {
-                                AthleteRowView(athlete: athlete)
+                                AthleteRow(athlete: athlete)
                             }
                         }
-                        .onDelete { offsets in
-                            offsets.forEach { store.deleteAthlete(id: filtered[$0].id) }
+                        .onDelete { idx in
+                            idx.forEach { store.deleteAthlete(id: filtered[$0].id) }
                         }
                     }
                     .searchable(text: $searchText, prompt: "이름 또는 종목 검색")
@@ -39,32 +39,23 @@ struct AthleteListView: View {
             .navigationTitle("선수 관리")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button { showingAdd = true } label: {
-                        Image(systemName: "plus")
-                    }
+                    Button { showingAdd = true } label: { Image(systemName: "plus") }
                 }
             }
-            .sheet(isPresented: $showingAdd) {
-                AddAthleteView()
-            }
+            .sheet(isPresented: $showingAdd) { AddAthleteView() }
         }
     }
 }
 
-struct AthleteRowView: View {
+struct AthleteRow: View {
     let athlete: Athlete
 
     var body: some View {
         HStack(spacing: 14) {
             ZStack {
-                Circle()
-                    .fill(Color.accentColor.opacity(0.15))
-                    .frame(width: 52, height: 52)
-                Text(athlete.initials)
-                    .font(.title3.bold())
-                    .foregroundColor(Color.accentColor)
+                Circle().fill(Color.accentColor.opacity(0.15)).frame(width: 52, height: 52)
+                Text(athlete.initials).font(.title3.bold()).foregroundColor(.accentColor)
             }
-
             VStack(alignment: .leading, spacing: 4) {
                 Text(athlete.name).font(.headline)
                 HStack(spacing: 4) {
@@ -74,12 +65,9 @@ struct AthleteRowView: View {
                     }
                 }
             }
-
             Spacer()
-
             VStack(alignment: .trailing, spacing: 2) {
-                Text("\(athlete.sessions.count)")
-                    .font(.title3.bold()).foregroundColor(Color.accentColor)
+                Text("\(athlete.sessions.count)").font(.title3.bold()).foregroundColor(.accentColor)
                 Text("영상").font(.caption2).foregroundColor(.secondary)
             }
         }
